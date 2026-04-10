@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+}
+
+/* Ensure body has a background */
+body {
+  background-color: white !important;
+}
+
+/* Basic layout styles */
+.flex {
+  display: flex !important;
+}
+
+.h-screen {
+  height: 100vh !important;
+}
+
+.bg-gray-950 {
+  background-color: #0f172a !important;
+}
+
+.overflow-hidden {
+  overflow: hidden !important;
+}
+
+.w-64 {
+  width: 16rem !important;
+}
+
+.bg-gray-900 {
+  background-color: #111827 !important;
+}
+
+.text-white {
+  color: white !important;
+}
+
+.flex-col {
+  flex-direction: column !important;
+}
+
+.border-r {
+  border-right: 1px solid !important;
+}
+
+.border-gray-800 {
+  border-color: #1f2937 !important;
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Smooth transitions */
+* {
+  @apply transition-colors duration-200;
+}
+
+/* Animation for loading dots */
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-8px);
+    opacity: 0.7;
+  }
+}
+
+.animate-bounce {
+  animation: bounce 1.4s infinite;
+}
+
+.animate-bounce-delay-1 {
+  animation: bounce 1.4s infinite;
+  animation-delay: 0.1s;
+}
+
+.animate-bounce-delay-2 {
+  animation: bounce 1.4s infinite;
+  animation-delay: 0.2s;
+}
