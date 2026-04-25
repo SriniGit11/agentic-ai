@@ -12,45 +12,31 @@ interface MetricsPanelProps {
 export default function MetricsPanel({ data, onToggleMetrics }: MetricsPanelProps) {
   return (
     <aside className="w-80 bg-gray-50 flex flex-col h-screen border-l border-gray-200 overflow-y-auto">
-      <div className="p-6 border-b border-gray-200 flex items-center justify-between gap-3">
-        <h2 className="text-lg font-bold text-gray-900 mb-0">Operational Metrics</h2>
-        {onToggleMetrics && (
-          <button
-            type="button"
-            onClick={onToggleMetrics}
-            className="w-10 h-10 bg-gray-200 hover:bg-gray-300 rounded-lg flex items-center justify-center text-gray-700 transition-colors"
-            aria-label="Collapse metrics panel"
-          >
-            <span className="text-lg">›</span>
-          </button>
-        )}
-      </div>
-
-        <div className="space-y-4">
-          {/* Estimated Cost */}
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-600">Estimated Cost</span>
-              <span className="text-xl font-bold text-green-600">{formatCost(data.estimatedCost)}</span>
+      {/* Execution Log - on TOP with banner */}
+      <div className="flex-1 p-6 flex flex-col min-h-[400px]">
+        {/* Banner for Execution Log */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-4 mb-4 flex items-center justify-between shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
             </div>
-            <p className="text-xs text-gray-500 mt-2">Based on current API usage</p>
+            <h3 className="text-white font-bold uppercase tracking-wider">Execution Log</h3>
           </div>
-
-          {/* CO₂ Impact */}
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-600">CO₂ Impact</span>
-              <span className="text-xl font-bold text-emerald-600">{formatCO2(data.co2Impact)}</span>
-            </div>
-            <p className="text-xs text-gray-500 mt-2">Carbon footprint of this session</p>
-          </div>
+          {onToggleMetrics && (
+            <button
+              type="button"
+              onClick={onToggleMetrics}
+              className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center text-white transition-colors"
+              aria-label="Collapse panel"
+            >
+              <span className="text-lg">›</span>
+            </button>
+          )}
         </div>
 
-      {/* Execution Log */}
-      <div className="flex-1 p-6 flex flex-col">
-        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Execution Log</h3>
-
-        <div className="space-y-3 flex-1">
+        <div className="space-y-3 flex-1 overflow-y-auto">
           {data.executionSteps.map((step, index) => (
             <div key={step.id} className="flex items-start gap-3">
               {/* Checkbox */}
@@ -97,6 +83,37 @@ export default function MetricsPanel({ data, onToggleMetrics }: MetricsPanelProp
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Operational Metrics - on BOTTOM with banner */}
+      <div className="p-6 border-t border-gray-200 space-y-4">
+        {/* Banner for Operational Metrics */}
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl p-4 flex items-center gap-3 shadow-lg">
+          <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <h3 className="text-white font-bold uppercase tracking-wider">Operational Metrics</h3>
+        </div>
+        
+        {/* Estimated Cost */}
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-600">Estimated Cost</span>
+            <span className="text-xl font-bold text-green-600">{formatCost(data.estimatedCost)}</span>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Based on current API usage</p>
+        </div>
+
+        {/* CO₂ Impact */}
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-600">CO₂ Impact</span>
+            <span className="text-xl font-bold text-emerald-600">{formatCO2(data.co2Impact)}</span>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Carbon footprint of this session</p>
         </div>
       </div>
 
