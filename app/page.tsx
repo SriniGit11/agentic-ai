@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Sidebar from '@/app/components/Sidebar';
 import ChatPanel from '@/app/components/ChatPanel';
 import MetricsPanel from '@/app/components/MetricsPanel';
@@ -13,6 +13,63 @@ export default function Home() {
   const [activeChatId, setActiveChatId] = useState<string | undefined>();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMetricsOpen, setIsMetricsOpen] = useState(true);
+  const [progressLogs, setProgressLogs] = useState<string[]>([]);
+  const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!currentMessageId) return;
+
+    const pollProgress = async () => {
+      try {
+        const response = await fetch('/api/progress', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ messageid: currentMessageId }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.progress) {
+            setProgressLogs((prev) => [...prev, data.progress]);
+            if (data.progress === 'end') {
+              // Make third API call for final response
+              try {
+                const finalResponse = await fetch('/api/progress', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ messageid: currentMessageId, topic: `${currentMessageId}final` }),
+                });
+                if (finalResponse.ok) {
+                  const finalData = await finalResponse.json();
+                  const finalMsg: ChatMessage = {
+                    id: (Date.now() + 2).toString(),
+                    role: 'assistant',
+                    content: finalData.progress || JSON.stringify(finalData),
+                    timestamp: new Date(),
+                  };
+                  setMessages((prev) => [...prev, finalMsg]);
+                }
+              } catch (error) {
+                console.error('Final API error:', error);
+              }
+              setCurrentMessageId(null);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Polling error:', error);
+        setCurrentMessageId(null);
+      }
+    };
+
+    const interval = setInterval(pollProgress, 2000); // Poll every 2 seconds
+
+    return () => clearInterval(interval);
+  }, [currentMessageId]);
 
   const handleNewChat = useCallback(() => {
     setMessages([
@@ -25,6 +82,8 @@ export default function Home() {
       },
     ]);
     setActiveChatId(undefined);
+    setProgressLogs([]);
+    setCurrentMessageId(null);
   }, []);
 
   const handleSelectChat = useCallback((id: string) => {
@@ -45,7 +104,6 @@ export default function Home() {
   }, []);
 
   const handleSendMessage = useCallback(async (userMessage: string) => {
-    // Add user message
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
@@ -55,20 +113,89 @@ export default function Home() {
 
     setMessages((prev) => [...prev, userMsg]);
     setIsLoading(true);
+    setProgressLogs([]);
+    setCurrentMessageId(null);
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Add assistant response
-    const assistantMsg: ChatMessage = {
-      id: (Date.now() + 1).toString(),
-      role: 'assistant',
-      content: `I received your message: "${userMessage}". In a production environment, this would be processed by your AI backend API and you'd receive a meaningful response here.`,
-      timestamp: new Date(),
+    const generateMessageId = (): string => {
+      const timestampPart = Date.now().toString(36).slice(-4).padStart(4, '0');
+      const randomPart = Math.random().toString(36).slice(2, 6);
+      return `${timestampPart}${randomPart}`;
     };
 
-    setMessages((prev) => [...prev, assistantMsg]);
-    setIsLoading(false);
+    const messageid = generateMessageId();
+    const topic = `${messageid}pub`;
+
+    try {
+      const response = await fetch('/api/send-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image: '',
+          messageid,
+          extension: '',
+          query: userMessage,
+          topic,
+          history: [],
+          fileType: null,
+          fileName: null,
+          progress: null,
+          state_tag: 0,
+        }),
+      });
+
+      const text = await response.text();
+      let reply = text;
+
+      if (response.ok) {
+        try {
+          const json = JSON.parse(text);
+          reply = typeof json.reply === 'string' ? json.reply : JSON.stringify(json, null, 2);
+        } catch {
+          reply = text;
+        }
+      } else {
+        let errorData;
+        try {
+          errorData = JSON.parse(text);
+        } catch {
+          errorData = { error: 'Unknown API error' };
+        }
+        throw new Error(errorData.error || 'API request failed');
+      }
+
+      const assistantMsg: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: reply,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, assistantMsg]);
+
+      // Check if response has progress to start polling
+      try {
+        const json = JSON.parse(reply);
+        if (json.progress) {
+          setProgressLogs([json.progress]);
+          setCurrentMessageId(messageid);
+        }
+      } catch {
+        // Not JSON, ignore
+      }
+    } catch (error: unknown) {
+      const errorContent = error instanceof Error ? error.message : 'Unknown error sending message';
+      const assistantMsg: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `Error sending message to API: ${errorContent}`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const handleToggleSidebar = useCallback(() => {
@@ -108,7 +235,7 @@ export default function Home() {
       />
 
       {isMetricsOpen ? (
-        <MetricsPanel data={mockMetricsData} onToggleMetrics={handleToggleMetrics} />
+        <MetricsPanel data={mockMetricsData} progressLogs={progressLogs} onToggleMetrics={handleToggleMetrics} />
       ) : (
         <button
           type="button"

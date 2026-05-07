@@ -6,10 +6,11 @@ import { formatCost, formatCO2 } from '@/app/lib/utils';
 
 interface MetricsPanelProps {
   data: MetricsData;
+  progressLogs?: string[];
   onToggleMetrics?: () => void;
 }
 
-export default function MetricsPanel({ data, onToggleMetrics }: MetricsPanelProps) {
+export default function MetricsPanel({ data, progressLogs = [], onToggleMetrics }: MetricsPanelProps) {
   return (
     <aside className="w-80 bg-gray-50 flex flex-col h-screen border-l border-gray-200 overflow-y-auto">
       {/* Execution Log - on TOP with banner */}
@@ -84,6 +85,20 @@ export default function MetricsPanel({ data, onToggleMetrics }: MetricsPanelProp
             </div>
           ))}
         </div>
+
+        {/* Progress Logs */}
+        {progressLogs.length > 0 && (
+          <div className="mt-4">
+            <h4 className="text-sm font-semibold text-gray-700 mb-2">Progress Updates</h4>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {progressLogs.map((log, index) => (
+                <div key={index} className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">{log}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Operational Metrics - on BOTTOM with banner */}
